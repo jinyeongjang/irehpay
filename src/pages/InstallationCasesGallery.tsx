@@ -19,13 +19,26 @@ const InstallationCasesGallery: React.FC = () => {
   // 페이지 ID로 Notion 페이지 내용을 로드하는 함수
   const loadNotionPage = async (pageId: string) => {
     setLoading(true);
-    if (pageId !== currentPageId) {
-      navigate(`?page=${pageId}`, { replace: true });
-    }
-
     try {
       const { data } = await axios.get(`https://notion-api.splitbee.io/v1/page/${pageId}`);
-      setResponse(data);
+
+      // Notion API 응답 개선
+      const cleanedData: any = {};
+      if (data && typeof data === 'object') {
+        Object.keys(data).forEach((key) => {
+          const block = data[key];
+          if (block && block.value) {
+            cleanedData[key] = {
+              ...block,
+              value: block.value.value || block.value,
+            };
+          } else {
+            cleanedData[key] = block;
+          }
+        });
+      }
+
+      setResponse(cleanedData);
     } catch (error) {
       console.error('Error fetching Notion data:', error);
     } finally {
@@ -44,7 +57,8 @@ const InstallationCasesGallery: React.FC = () => {
           e.preventDefault();
           const pageId = url.searchParams.get('page');
           if (pageId) {
-            loadNotionPage(pageId);
+            // 뒤로가기가 되도록 replace: true 없이 navigate 호출
+            navigate(`?page=${pageId}`);
           }
         }
       }
@@ -64,12 +78,15 @@ const InstallationCasesGallery: React.FC = () => {
         document.removeEventListener('click', handleLinkClick as any);
       }
     };
-  }, [response]);
+  }, [response, navigate]);
 
   useEffect(() => {
+    // URL의 pageId 변경 감지하여 데이터 로딩
     const pageId = currentPageId || '168a1962dab480a0a403f7b946665349';
     loadNotionPage(pageId);
+  }, [currentPageId]);
 
+  useEffect(() => {
     // Custom styles for notion override
     const style = document.createElement('style');
     style.innerHTML = `
@@ -85,7 +102,7 @@ const InstallationCasesGallery: React.FC = () => {
     return () => {
       document.head.removeChild(style);
     };
-  }, [location.search]);
+  }, []);
 
   return (
     <div className="container mx-auto mt-[100px] flex px-4 py-8 xs:mt-[0px] xs:flex-col">

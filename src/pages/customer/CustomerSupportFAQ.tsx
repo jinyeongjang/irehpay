@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useLayoutEffect } from 'react';
-import { motion } from 'framer-motion';
 import { NotionRenderer } from 'react-notion';
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -23,40 +22,31 @@ const CustomerSupportFAQ: React.FC = () => {
   // 페이지 ID로 Notion 페이지 내용을 로드하는 함수
   const loadNotionPage = async (pageId: string) => {
     setLoading(true);
-    if (pageId !== currentPageId) {
-      navigate(`?page=${pageId}`, { replace: true });
-    }
-
     try {
       const { data } = await axios.get(`https://notion-api.splitbee.io/v1/page/${pageId}`);
-      setResponse(data);
+
+      // Notion API 응답 개선
+      const cleanedData: any = {};
+      if (data && typeof data === 'object') {
+        Object.keys(data).forEach((key) => {
+          const block = data[key];
+          if (block && block.value) {
+            cleanedData[key] = {
+              ...block,
+              value: block.value.value || block.value,
+            };
+          } else {
+            cleanedData[key] = block;
+          }
+        });
+      }
+
+      setResponse(cleanedData);
     } catch (error) {
       console.error('Error fetching Notion data:', error);
     } finally {
       setLoading(false);
     }
-  };
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.2,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 50 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.8,
-        ease: 'easeOut',
-      },
-    },
   };
 
   // 링크 클릭 핸들러 (이벤트 위임 사용)
@@ -72,7 +62,8 @@ const CustomerSupportFAQ: React.FC = () => {
           e.preventDefault();
           const pageId = url.searchParams.get('page');
           if (pageId) {
-            loadNotionPage(pageId);
+            // 뒤로가기가 되도록 replace: true 없이 navigate 호출
+            navigate(`?page=${pageId}`);
           }
         }
       }
@@ -92,12 +83,15 @@ const CustomerSupportFAQ: React.FC = () => {
         document.removeEventListener('click', handleLinkClick as any);
       }
     };
-  }, [response]);
+  }, [response, navigate]);
 
   useEffect(() => {
+    // URL의 pageId 변경 감지하여 데이터 로딩
     const pageId = currentPageId || '15fa1962dab480c4bb79dd4ffed101fc';
     loadNotionPage(pageId);
+  }, [currentPageId]);
 
+  useEffect(() => {
     const style = document.createElement('style');
     style.innerHTML = `
       .notion-page-header {
@@ -112,37 +106,26 @@ const CustomerSupportFAQ: React.FC = () => {
     return () => {
       document.head.removeChild(style);
     };
-  }, [location.search]);
+  }, []);
 
   return (
     <div className="container mx-auto mt-[100px] flex px-4 py-8 xs:mt-[0px] xs:flex-col">
       <CustomerSidebar />
 
-      <motion.div
-        className="ml-[300px] flex-1 pl-8 xs:ml-0 xs:mt-[150px] xs:pl-0"
-        initial="hidden"
-        animate="visible"
-        variants={containerVariants}>
-        <motion.div className="w-full max-w-6xl rounded-lg bg-white p-8 xs:p-4" variants={itemVariants}>
+      <div className="ml-[300px] flex-1 pl-8 xs:ml-0 xs:mt-[150px] xs:pl-0">
+        <div className="w-full max-w-6xl rounded-lg bg-white p-8 xs:p-4">
           <div className="mb-4 flex items-center gap-4">
             {currentPageId && (
-              <motion.button
-                className="flex h-[50px] w-[50px] items-center justify-center rounded-xl px-2 py-2 text-gray-800 hover:bg-gray-100"
-                onClick={() => navigate(-1)}
-                variants={itemVariants}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}>
+              <button
+                className="flex h-[50px] w-[50px] items-center justify-center rounded-xl px-2 py-2 text-gray-800 transition-all hover:scale-105 hover:bg-gray-100 active:scale-95"
+                onClick={() => navigate(-1)}>
                 <IoArrowBack className="h-12 w-12" />
-              </motion.button>
+              </button>
             )}
-            <motion.h1 className="text-4xl font-bold text-blue-600 xs:text-3xl" variants={itemVariants}>
-              자주 묻는 질문
-            </motion.h1>
+            <h1 className="text-4xl font-bold text-blue-600 xs:text-3xl">자주 묻는 질문</h1>
           </div>
-          <motion.p className="mb-8 text-left text-lg text-gray-700" variants={itemVariants}>
-            고객님들이 자주 묻는 질문들을 모았습니다.
-          </motion.p>
-          <motion.hr className="my-12 border-gray-200 xs:my-8" variants={itemVariants} />
+          <p className="mb-8 text-left text-lg text-gray-700">고객님들이 자주 묻는 질문들을 모았습니다.</p>
+          <hr className="my-12 border-gray-200 xs:my-8" />
 
           {loading ? (
             <div className="flex items-center justify-center py-8">
@@ -153,8 +136,8 @@ const CustomerSupportFAQ: React.FC = () => {
               <NotionRenderer blockMap={response} fullPage={true} mapPageUrl={(pageId) => `?page=${pageId}`} />
             </div>
           )}
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
       <ScrollToTop />
     </div>
   );

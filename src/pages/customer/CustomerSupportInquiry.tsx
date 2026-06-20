@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { motion } from 'framer-motion';
 import ScrollToTop from '../../components/ScrollToTop';
 import CustomerSidebar from '../../components/CustomerSidebar';
 import { LuMessageCircle } from 'react-icons/lu';
@@ -42,28 +41,6 @@ const CustomerSupportInquiry: React.FC = () => {
     initializeChannelTalk();
   }, []);
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.2,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 50 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.8,
-        ease: 'easeOut',
-      },
-    },
-  };
-
   const handleChannelTalk = () => {
     if (window.ChannelIO) {
       window.ChannelIO('showMessenger');
@@ -74,23 +51,15 @@ const CustomerSupportInquiry: React.FC = () => {
     <div className="container mx-auto mt-[100px] flex px-4 py-8 xs:mt-[0px] xs:flex-col">
       <CustomerSidebar />
 
-      <motion.div
-        className="ml-[300px] flex-1 pl-8 xs:ml-0 xs:mt-[150px] xs:pl-0"
-        initial="hidden"
-        animate="visible"
-        variants={containerVariants}>
-        <motion.div className="w-full max-w-6xl rounded-lg bg-white p-8 xs:p-4" variants={itemVariants}>
-          <motion.h1
-            className="mb-4 text-left text-4xl font-bold text-blue-600 xs:text-left xs:text-3xl"
-            variants={itemVariants}>
-            문의하기
-          </motion.h1>
-          <motion.p className="mb-8 text-left text-lg text-gray-700" variants={itemVariants}>
+      <div className="ml-[300px] flex-1 pl-8 xs:ml-0 xs:mt-[150px] xs:pl-0">
+        <div className="w-full max-w-6xl rounded-lg bg-white p-8 xs:p-4">
+          <h1 className="mb-4 text-left text-4xl font-bold text-blue-600 xs:text-left xs:text-3xl">문의하기</h1>
+          <p className="mb-8 text-left text-lg text-gray-700">
             궁금하신 점이나 도움이 필요하신 경우 <br></br>문의해 주세요.
-          </motion.p>
-          <motion.hr className="my-12 border-gray-200 xs:my-8" variants={itemVariants} />
+          </p>
+          <hr className="my-12 border-gray-200 xs:my-8" />
 
-          <motion.div className="space-y-4" variants={itemVariants}>
+          <div className="space-y-4">
             <div className="rounded-lg bg-gray-50 p-6">
               <h3 className="mb-2 text-left text-xl font-semibold text-gray-800">채널톡으로 실시간 상담 문의하기</h3>
               <p className="text-left text-gray-600">
@@ -109,9 +78,9 @@ const CustomerSupportInquiry: React.FC = () => {
                 <span className="ml-2">채널톡 상담하기</span>
               </button>
             </div>
-          </motion.div>
-        </motion.div>
-      </motion.div>
+          </div>
+        </div>
+      </div>
       <ScrollToTop />
     </div>
   );
